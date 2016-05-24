@@ -1,160 +1,96 @@
 import random 
 from array import array
-import math
 
 class Agent:
+    "A template agent acting randomly"
     
     #name should contain only letters, digits, and underscores (not enforced by environment)
-    __name = 'JT_JG'
+    __name = 'Misiu'
     
     def __init__(self, stateDim, actionDim, agentParams):
-    	self.path = agentParams[0]
+	self.path = agentParams[0]
         "Initialize agent assuming floating point state and action"
         self.__stateDim = stateDim
-    	print self.__stateDim #82
         self.__actionDim = actionDim 
-        self.__action = array('d',[0 for x in range(actionDim)]) #30
-    	self.__weights = array('d',[0 for x in range(3)]) 
+        self.__action = array('d',[0 for x in range(actionDim)])
+	self.__meta_action = array('h',[x for x in range(-1,3)])
+	print self.__meta_action
+	self.__wages = []
+
+	self.__food = [9,-1]
         #we ignore agentParams because our agent does not need it.
         #agentParams could be a parameter file needed by the agent.
         random.seed()
-
-    	self.__load_weights(self.path)	
-
-    #	self.__weights[1]=self.__weights[1]-1
-
-    #	self.__save_weights(self.path)
-    	#[0,0],[0,1],[1,0], [1,1], [-1,1]
-    	self.prev_state = []
-    	self.prev_action = []
-
-        self.steps_done=0    
-
-    def __update_weights(self):
-    	pass
 	
-    #TODO
-    def __get_legal_actions(self):
-	   pass
-	
-    #TODO
-    def __cal_Q_value(self, action):
-	   pass
-	#TODO
+	self.__load_wages(self.path)	
+	print self.__wages
+#	self.__wages[1]=self.__wages[1]-1
 
-    def __save_weights(self, path):
-    	with open(path+'/weights.txt', 'w') as outputfile:
-    		for x in self.__weights:
-    			outputfile.write(str(x))
-    			outputfile.write(' ')
-    	print 'weights saved with success'	
+#	self.__save_wages(self.path)
 
-    def __load_weights(self, path):
-    	z=0
-    	with open(path+'/weights.txt') as inputfile:
-    		for line in inputfile:
-    			for x in line.split():
-    				self.__weights[z]= float(x) 
-    				z=z+1
-    	print 'weights loaded with success'
+	self.alpha = float(0.1)
+        self.epsilon = float(0.05)
+        self.discount = float(0.8)
+	self.number = 0
 
-    def __randomAction(self):
-        for i in range(self.__actionDim):
-            self.__action[i] = random.random() 
+	self.prev_state = []
+	self.prev_action = []
+	self.prev_action_meta = []
 
-    def _maxLenthAction(self):
-        for i in range(self.__actionDim):
-            self.__action[i] = 1 if i%3==1 else 0
 
+    def dist(self, state):
+	x = state[38]
+	y = state[39]
+	dist = (x-self.__food[0])**2+(y-self.__food[1])**2
+	dist = dist ** (0.5)
+	return dist
+
+    def distmid(self, state):
+	x = state[18]
+	y = state[19]
+	dist = (x-self.__food[0])**2+(y-self.__food[1])**2
+	dist = dist ** (0.5)
+	return dist
     
-    def __curlAction(self):
-        for i in range(self.__actionDim):
-            if (i%3 == 2):
-                self.__action[i] = 1
-            else:
-                self.__action[i] = 0
-
-            
-    def start(self, state):
-        "Given starting state, agent returns first action"
-        # self.__action=
-        print "Init state:"
-        print state
-        # self.__randomAction()
-        self._maxLenthAction()
-        self._displayLenghths(state)
+	#akcje -1 - nic 0 - zgiecie przeciwnie z ruchem, 1 - wydluzenie, 2- zgodnie z ruchem
 
 
+    def __find_best_action(self, state):
+	best_action = []
+	best = 1000000 
+	for i in self.__meta_action:
+		temp = self.get_Q_value(state, i)
+		if temp<best:
+			best=temp
+			best_action = [i]
+		elif temp==best :
+			best_action.append(i)
+	if (len(best_action) >= 1):
+		best = random.randint(0, len(best_action)-1)
+		#print 'Best actions: ', best_action, ' and picked: ',  best_action[best]
+		return best_action[best]
+	else:
+		#print 'Best action not found'
+		return -1
 
+    def get_Q_value(self, state, action):
+	sum=self.__wages[action+1][0]*self.dist(state)+self.__wages[action+1][1]*self.distmid(state)
+	return	sum
 
+    def __save_wages(self, path):
+	with open(path, 'w') as outputfile:
+		for x in self.__wages:
+			for a in x:
+				outputfile.write(str(a))
+				outputfile.write(' ')
+			outputfile.write("\n")	
+	print 'Wages saved with success'	
 
-        # print "Akcja"
-        # print self.__action
-        return self.__action
-
-    def _displayLenghths(self, state):
-        ls=self.getArmLengths(state)
-        for i in range(10):
-            print "Arm "+str(i)+": "+str(ls[i])
-        print "Sum: ", sum(ls[0:10])
-        print "Estimate", ls[10]
-
-    def getArmLengths(self, state):
-        offsetUpper=2
-        offsetLower=42
-        lengths=[]
-        x1=0
-        y1=0
-        x2=0
-        y2=0
-        for arm in range(10):
-            x2=state[offsetLower+arm*4]
-            y2=state[offsetLower+arm*4+1]
-            l=math.sqrt((x2-x1)**2+(y2-y1)**2)
-            lengths.append(l)
-            # print x1, y1, x2, y2
-            x1=x2
-            y1=y2
-            
-
-            # x1=state[offsetUpper+arm*4]
-            # y1=state[offsetUpper+arm*4+1]
-
-            # x2=state[offsetLower+arm*4]
-            # y2=state[offsetLower+arm*4+1]
-
-            # l=math.sqrt((x2-x1)**2+(y2-y1)**2)
-            # lengths.append(l)
-
-            # if(arm==0):
-            # print x1, y1, x2, y2
-        totalEst=l=math.sqrt((x2)**2+(y2)**2)
-        lengths.append(totalEst)
-        return lengths
-
-
-    "Given current reward and state, agent returns next action"
-    def step(self, reward, state):     
-        self.steps_done+=1
-
-        if(self.steps_done<300 and self.steps_done%30==0):
-            print "Steps", self.steps_done
-            self._displayLenghths(state)
-	
-        
-        self._maxLenthAction()
-#        self.__curlAction()
-	
-        return self.__action
-    
-    def end(self, reward):
-        pass
-    
-    #Tylko dla 'Communication error'
-    def cleanup(self):
-        self.__action = array('d',[0 for x in range(actionDim)]) 
-    
-    def getName(self):
-        return self.__name
-    
-            
+    def __load_wages(self, path):
+	z=0
+	with open(path) as inputfile:
+		for line in inputfile:
+			self.__wages.append([])
+			for x in line.split():
+				self.__wages[z].append(float(x)) 
+				
