@@ -94,3 +94,87 @@ class Agent:
 			for x in line.split():
 				self.__wages[z].append(float(x)) 
 				
+			z=z+1
+	print 'Wages loaded with success'
+
+    def __randomAction(self):
+	return random.randint(-1, 3)
+  
+    
+    def __curlAction(self, c):
+	action = array('d',[0 for x in range(self.__actionDim)])	
+	if c>-1:				
+		for i in range(self.__actionDim):
+		    if (i%3 == (c)):
+		        action[i] = 1
+		    else:
+		        action[i] = 0
+
+	return action
+
+    def normalize(self):
+	suma=0
+	for i in range(len(self.__wages)):
+		suma = suma+sum(self.__wages[i])
+	for i in range(len(self.__wages)):
+		self.__wages[i][:] = [x / suma for x in self.__wages[i]]
+            
+    def start(self, state):
+	meta_action = self.__find_best_action(state)
+        action = self.__curlAction(meta_action)
+	self.prev_state = state
+	self.prev_action = action
+	self.prev_action_meta = meta_action	
+	#print self.__wages
+	#print 'Best action: ', meta_action
+	self.number=self.number+1
+        return action
+    
+    def step(self, reward, state):	
+	#self.__update_wages(self, self.prev_action_meta, ):			
+        #"Given current reward and state, agent returns next action"
+	minQ = float("-inf")
+        for act in self.__meta_action:
+            q = self.get_Q_value(state, act)
+            minQ = min(minQ, q)
+
+        if minQ == float("-inf"):
+            minQ = 0	
+	
+	reward2 = 0.01
+
+	difference = ( -1*reward + self.discount * minQ) + self.get_Q_value(self.prev_state,self.prev_action_meta)   
+	#difference = (reward + self.discount * self.get_Q_value(state,self.prev_action_meta) ) + self.get_Q_value(self.prev_state,self.prev_action_meta)    
+        self.__wages[self.prev_action_meta+1][0] = max(self.__wages[self.prev_action_meta][0] + self.alpha * difference * self.dist(state),0)
+	self.__wages[self.prev_action_meta+1][1] = max(self.__wages[self.prev_action_meta][1] + self.alpha * difference * self.distmid(state),0)
+	self.normalize()
+	#print self.__wages
+	meta_action = self.__find_best_action(state)
+	
+	#print meta_action, reward
+        action = self.__curlAction(meta_action)
+	self.prev_state = state
+	self.prev_action = action
+	self.prev_action_meta = meta_action
+	self.number=1+self.number
+	
+	if reward==10:
+		print 'Koniec!', reward
+		
+		self.__save_wages(self.path)
+	if self.number==998:
+		print 'Koniec!', reward
+		self.__save_wages(self.path)	
+        return action
+    	
+    def end(self, reward):
+	print 'Koniec!'
+        self.__save_wages(self.path)
+    
+    def cleanup(self):
+	self.__action = array('d',[0 for x in range(self.__actionDim)]) 
+    
+    def getName(self):
+        return self.__name
+    
+          
