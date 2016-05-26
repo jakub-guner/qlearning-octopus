@@ -16,8 +16,13 @@ class Agent:
 		self.__actionDim = actionDim 
 		self.__action = array('d',[0 for x in range(actionDim)])
 		#akcje -1 - nic 0 - zgiecie przeciwnie z ruchem, 1 - wydluzenie, 2- zgodnie z ruchem
-		self.__meta_action = array('h',[x for x in range(-1,3)])
-		print self.__meta_action
+		meta_act = [-1,0,1, 2]
+		self.__meta_action=[]
+		for a in meta_act:
+			for b in meta_act:
+				self.__meta_action.append([a,b])
+
+		print(self.__meta_action)
 		self.__wages = []
 		random.seed()
 		
@@ -42,6 +47,7 @@ class Agent:
 		return action
 	
 	def step(self, reward, state):
+
 		dop=self.features.doping(self.prev_state, state)
 		minQ = float("+inf")
 		for act in self.__meta_action:
@@ -96,22 +102,29 @@ class Agent:
 			return -1
 
 	def __randomAction(self):
- 		return random.randint(-1, 2)
+ 		return [random.randint(-1, 2),random.randint(-1, 2)]
 
 	def get_Q_value(self, state, action):
+
 		features = self.features.getFeatures(state, action)
 		sum=0
-		for i in range(len(self.__wages[action+1])):
-			sum=sum+self.__wages[action+1][i]*features[i]
+		for i in range(len(self.__wages[(action[0]+1)*4+(action[1]+1)])):
+			sum=sum+self.__wages[(action[0]+1)*4+(action[1]+1)][i]*features[i]
 
 
 		return	sum
 	
 	def __curlAction(self, c):
 		action = array('d',[0 for x in range(self.__actionDim)])	
-		if c>-1:				
-			for i in range(self.__actionDim):
-				if (i%3 == (c)):
+		if c[0]>-1:				
+			for i in range(self.__actionDim/2):
+				if (i%3 == (c[0])):
+					action[i] = 1
+				else:
+					action[i] = 0
+		if c[1]>-1:					
+			for i in range((self.__actionDim/2),self.__actionDim):
+				if (i%3 == (c[1])):
 					action[i] = 1
 				else:
 					action[i] = 0
@@ -129,7 +142,7 @@ class Agent:
 		features = self.features.getFeatures(state, action)
 		for featurenr in range(len(features)):  
 			difference = (-1*reward + self.discount * minQ) - self.get_Q_value(self.prev_state,self.prev_action_meta)
-			self.__wages[self.prev_action_meta+1][featurenr] = max(self.__wages[self.prev_action_meta][featurenr] + self.alpha * difference * features[featurenr],0)
+			self.__wages[(self.prev_action_meta[0]+1)*4+(self.prev_action_meta[1]+1)][featurenr] = max(self.__wages[(self.prev_action_meta[0]+1)*4+(self.prev_action_meta[1]+1)][featurenr] + self.alpha * difference * features[featurenr],0)
 
 	def __save_wages(self, path):
 		with open(path, 'w') as outputfile:
