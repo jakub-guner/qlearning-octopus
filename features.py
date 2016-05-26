@@ -68,3 +68,6 @@ class Features:
 		endLength=self.distanceBetweenPoints(0,0, xEnd, yEnd)
 		cosinus=dotProduct/(endLength*self.__foodLength)
 		return acos(cosinus)
+
+	def doping(self, oldState, newState):
+		return (self.dist(oldState)-self.dist(newState))/5

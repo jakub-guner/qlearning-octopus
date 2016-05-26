@@ -41,19 +41,27 @@ class Agent:
 		self.number=self.number+1
 		return action
 	
-	def step(self, reward, state):	
-		minQ = float("-inf")
+	def step(self, reward, state):
+		dop=self.features.doping(self.prev_state, state)
+		minQ = float("+inf")
 		for act in self.__meta_action:
 			q = self.get_Q_value(state, act)
 			minQ = min(minQ, q)
 
-		if minQ == float("-inf"):
+		if minQ == float("+inf"):
 			minQ = 0	
 		action = []
 		# reward2 = 0.01
-		self.update(minQ, reward, state, action)
+		self.update(minQ, reward+dop, state, action)
 		self.normalize()
-		meta_action = self.__find_best_action(state)
+
+
+		#Exploitation vs exploraion
+		if(random.randint(0, 10)<9):
+			meta_action = self.__find_best_action(state)
+		else:
+			meta_action = self.__randomAction()
+
 		action = self.__curlAction(meta_action)
 		self.prev_state = state
 		self.prev_action = action
@@ -87,6 +95,9 @@ class Agent:
 		else:
 			return -1
 
+	def __randomAction(self):
+ 		return random.randint(-1, 2)
+
 	def get_Q_value(self, state, action):
 		features = self.features.getFeatures(state, action)
 		sum=0
@@ -117,7 +128,7 @@ class Agent:
 	def update(self, minQ, reward, state, action):
 		features = self.features.getFeatures(state, action)
 		for featurenr in range(len(features)):  
-			difference = (-1*reward + self.discount * minQ) + self.get_Q_value(self.prev_state,self.prev_action_meta)
+			difference = (-1*reward + self.discount * minQ) - self.get_Q_value(self.prev_state,self.prev_action_meta)
 			self.__wages[self.prev_action_meta+1][featurenr] = max(self.__wages[self.prev_action_meta][featurenr] + self.alpha * difference * features[featurenr],0)
 
 	def __save_wages(self, path):
