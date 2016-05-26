@@ -39,7 +39,6 @@ def receive(numTokens):
 def sendAction(action):
     #sends all the components of the action one by one
     for a in action:
-        # print str(a)
         sendStr(str(a))
 
 #main procedure that handles the protocol
@@ -60,26 +59,23 @@ sendStr(agent.getName())
 
 for i in range(numEpisodes):
     sendStr('START')
-    # print "Episode started " + str(i)
     data = receive(2+stateDim)
     
     terminalFlag = int(data[0])
     state = map(float, data[2:])
     action = agent.start(state)
-
+    
     while not terminalFlag:
-        # print "Nxt step"
         sendStr('STEP')
         sendStr(str(actionDim))
         sendAction(action)
-        # print "Sent"
+        
         data = receive(3 + stateDim)
         if not(len(data) == stateDim + 3):
             print 'Communication error: calling agent.cleanup()'
             agent.cleanup()
             sys.exit(1)
-        
-        # print "received"
+            
         reward = float(data[0])
         terminalFlag = int(data[1])
         state = map(float, data[3:])
