@@ -32,6 +32,43 @@ class Agent:
 		self.prev_action = []
 		self.prev_action_meta = []
 
+	def start(self, state):
+		meta_action = self.__find_best_action(state)
+		action = self.__curlAction(meta_action)
+		self.prev_state = state
+		self.prev_action = action
+		self.prev_action_meta = meta_action	
+		self.number=self.number+1
+		return action
+	
+	def step(self, reward, state):	
+		minQ = float("-inf")
+		for act in self.__meta_action:
+			q = self.get_Q_value(state, act)
+			minQ = min(minQ, q)
+
+		if minQ == float("-inf"):
+			minQ = 0	
+		action = []
+		# reward2 = 0.01
+		self.update(minQ, reward, state, action)
+		self.normalize()
+		meta_action = self.__find_best_action(state)
+		action = self.__curlAction(meta_action)
+		self.prev_state = state
+		self.prev_action = action
+		self.prev_action_meta = meta_action
+		self.number=1+self.number
+		
+		if reward==10:
+			print 'Koniec!', reward
+			
+			self.__save_wages(self.path)
+		if self.number==998:
+			print 'Koniec!', reward
+			self.__save_wages(self.path)	
+		
+		return action
 
 	def __find_best_action(self, state):
 		best_action = []
@@ -82,44 +119,6 @@ class Agent:
 		for featurenr in range(len(features)):  
 			difference = (-1*reward + self.discount * minQ) + self.get_Q_value(self.prev_state,self.prev_action_meta)
 			self.__wages[self.prev_action_meta+1][featurenr] = max(self.__wages[self.prev_action_meta][featurenr] + self.alpha * difference * features[featurenr],0)
-			
-	def start(self, state):
-		meta_action = self.__find_best_action(state)
-		action = self.__curlAction(meta_action)
-		self.prev_state = state
-		self.prev_action = action
-		self.prev_action_meta = meta_action	
-		self.number=self.number+1
-		return action
-	
-	def step(self, reward, state):	
-		minQ = float("-inf")
-		for act in self.__meta_action:
-			q = self.get_Q_value(state, act)
-			minQ = min(minQ, q)
-
-		if minQ == float("-inf"):
-			minQ = 0	
-		action = []
-		# reward2 = 0.01
-		self.update(minQ, reward, state, action)
-		self.normalize()
-		meta_action = self.__find_best_action(state)
-		action = self.__curlAction(meta_action)
-		self.prev_state = state
-		self.prev_action = action
-		self.prev_action_meta = meta_action
-		self.number=1+self.number
-		
-		if reward==10:
-			print 'Koniec!', reward
-			
-			self.__save_wages(self.path)
-		if self.number==998:
-			print 'Koniec!', reward
-			self.__save_wages(self.path)	
-		
-		return action
 
 	def __save_wages(self, path):
 		with open(path, 'w') as outputfile:
