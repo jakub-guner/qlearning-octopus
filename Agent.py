@@ -48,13 +48,15 @@ class Agent:
 	
 	def step(self, reward, state):
 		dop=self.features.doping(self.prev_state, state)
-		minQ = float("+inf")
+		# minQ = float("+inf")
+		minQ = 0
 		for act in self.__meta_action:
 			q = self.get_Q_value(state, act)
-			minQ = min(minQ, q)
+			# minQ = min(minQ, q)
+			minQ = max(minQ, q)
 
-		if minQ == float("+inf"):
-			minQ = 0	
+		# if minQ == float("+inf"):
+			# minQ = 0	
 		action = []
 		# reward2 = 0.01
 
@@ -92,11 +94,13 @@ class Agent:
 
 	def __find_best_action(self, state):
 		best_action = []
-		best = 1000000 
+		# best = 1000000 
+		best = float("-inf")#0
 		for i in self.__meta_action:
 			temp = self.get_Q_value(state, i)
 			#print temp, i
-			if temp<best:
+			# if temp<best:
+			if temp>best:
 				best=temp
 				best_action = [i]
 			elif temp==best :
@@ -105,7 +109,7 @@ class Agent:
 			best = random.randint(0, len(best_action)-1)
 			return best_action[best]
 		else:
-			return -1
+			return [-1, -1]
 
 	def __randomAction(self):
  		return [random.randint(-1, 2),random.randint(-1, 2)]
@@ -113,9 +117,10 @@ class Agent:
 	def get_Q_value(self, state, action):
 
 		features = self.features.getFeatures(state, action)
+		indeks_wag_akcji=(action[0]+1)*4+(action[1]+1)
 		sum=0
 		for i in range(len(self.__wages[(action[0]+1)*4+(action[1]+1)])):
-			sum=sum+self.__wages[(action[0]+1)*4+(action[1]+1)][i]*features[i]
+			sum=sum+self.__wages[indeks_wag_akcji][i]*features[i]
 
 
 		return	sum
@@ -144,11 +149,18 @@ class Agent:
 		for i in range(len(self.__wages)):
 			self.__wages[i][:] = [x / suma for x in self.__wages[i]]
 
+	"""minQ - best w biezacym stanie """
+	"""reward - nagroda za dojscie do biezacego stanu"""
+	"""state - biezacy stan """
+	"""action - zawsze puste """
 	def update(self, minQ, reward, state, action):
 		features = self.features.getFeatures(state, action)
+		indeks_wag_akcji=(self.prev_action_meta[0]+1)*4+(self.prev_action_meta[1]+1)
 		for featurenr in range(len(features)):  
-			difference = (-1*reward + self.discount * minQ) - self.get_Q_value(self.prev_state,self.prev_action_meta)
-			self.__wages[(self.prev_action_meta[0]+1)*4+(self.prev_action_meta[1]+1)][featurenr] = max(self.__wages[(self.prev_action_meta[0]+1)*4+(self.prev_action_meta[1]+1)][featurenr] + self.alpha * difference * features[featurenr],0)
+			difference = (-1*reward + self.discount * minQ) - self.get_Q_value(self.prev_state, self.prev_action_meta)
+			new_value = max(self.__wages[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr], 0)
+			# new_value = self.__wages[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr]
+			self.__wages[indeks_wag_akcji][featurenr] = new_value
 
 	def __save_wages(self, path):
 		with open(path, 'w') as outputfile:

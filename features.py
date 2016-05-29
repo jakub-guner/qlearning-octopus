@@ -14,11 +14,18 @@ class Features:
 
 	def getFeatures(self, state, action):
 		features = []
-		features.append(self.dist(state))
-		features.append(self.distmid(state))
-		features.append(self.totalLength(state))
-		features.append(self.angleDelta(state))
-		features.append(self.angleVar(state))
+		# features.append(self.dist(state)) 		#Im mniej tym lepiej
+		# features.append(self.distmid(state))	#Im mniej tym lepiej
+		# features.append(self.totalLength(state))#Im wiecej tym lepiej
+		# features.append(self.angleDelta(state)) #Im mniej tym lepiej
+		# features.append(self.angleVar(state))	#Im mniej tym lepiej
+
+
+		features.append(12-self.dist(state)) 		#Im wiecej tym lepiej
+		features.append(12-self.distmid(state))		#Im wiecej tym lepiej
+		features.append(self.totalLength(state))	#Im wiecej tym lepiej
+		features.append(1-self.angleDelta(state)) 	#Im wiecej tym lepiej
+		features.append(1-self.angleVar(state))		#Im wiecej tym lepiej
 		return features
 
 	"""Odleglosc koncowki od kropki """
