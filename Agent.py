@@ -157,7 +157,7 @@ class Agent:
 		features = self.features.getFeatures(state, action)
 		indeks_wag_akcji=(self.prev_action_meta[0]+1)*4+(self.prev_action_meta[1]+1)
 		for featurenr in range(len(features)):  
-			difference = (-1*reward + self.discount * minQ) - self.get_Q_value(self.prev_state, self.prev_action_meta)
+			difference = (reward + self.discount * minQ) - self.get_Q_value(self.prev_state, self.prev_action_meta)
 			new_value = max(self.__wages[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr], 0)
 			# new_value = self.__wages[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr]
 			self.__wages[indeks_wag_akcji][featurenr] = new_value
