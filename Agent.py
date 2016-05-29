@@ -47,7 +47,6 @@ class Agent:
 		return action
 	
 	def step(self, reward, state):
-
 		dop=self.features.doping(self.prev_state, state)
 		minQ = float("+inf")
 		for act in self.__meta_action:
@@ -58,7 +57,13 @@ class Agent:
 			minQ = 0	
 		action = []
 		# reward2 = 0.01
-		self.update(minQ, reward+dop, state, action)
+
+		if(dop>0 and reward==-0.01):
+			reward/=2
+		if(dop<0 and reward==-0.01):
+			reward*=2
+
+		self.update(minQ, reward, state, action)
 		self.normalize()
 
 
@@ -75,11 +80,12 @@ class Agent:
 		self.number=1+self.number
 		
 		if reward==10:
-			print 'Koniec!', reward
-			
+			print 'Koniec - touch!', reward-self.number*0.01
+			self.number=0
 			self.__save_wages(self.path)
 		if self.number==998:
-			print 'Koniec!', reward
+			print 'Koniec - timeout!', reward-self.number*0.01
+			self.number=0
 			self.__save_wages(self.path)	
 		
 		return action

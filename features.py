@@ -1,4 +1,5 @@
 from math import acos
+from numpy import var
 
 class Features:
 	def __init__(self):
@@ -17,21 +18,8 @@ class Features:
 		features.append(self.distmid(state))
 		features.append(self.totalLength(state))
 		features.append(self.angleDelta(state))
+		features.append(self.angleVar(state))
 		return features
-
-	# def dist(self, state):
-	# 	x = state[38]
-	# 	y = state[39]
-	# 	dist = (x-self.__food[0])**2+(y-self.__food[1])**2
-	# 	dist = dist ** (0.5)
-	# 	return dist
-
-	# def distmid(self, state):
-	# 	x = state[18]
-	# 	y = state[19]
-	# 	dist = (x-self.__food[0])**2+(y-self.__food[1])**2
-	# 	dist = dist ** (0.5)
-	# 	return dist
 
 	"""Odleglosc koncowki od kropki """
 	def dist(self, state):
@@ -69,5 +57,33 @@ class Features:
 		cosinus=dotProduct/(endLength*self.__foodLength)
 		return acos(cosinus)
 
+	"""Wariancja katow pomiedzy kolejnymi czlonami ramienia"""
+	"""Im mniejsza tym bardziej jednolita krzywizna"""
+	def angleVar(self, state):
+		x1=0
+		y1=0
+		offsetLower=42
+		totLen=0.0
+		angles=[]
+		for part in range(9):
+			x2=state[offsetLower+part*4]
+			y2=state[offsetLower+part*4+1]
+
+			x3=state[offsetLower+(part+1)*4]
+			y3=state[offsetLower+(part+1)*4+1]
+
+			dotProduct=(x2-x1)*(x3-x2)+(y2-y1)*(y3-y2)
+			length1=self.distanceBetweenPoints(x1, y1, x2, y2)
+			length2=self.distanceBetweenPoints(x2, y2, x3, y3)
+			# print dotProduct
+			# print length1*length2
+			cosinus=dotProduct/(length1*length2)
+			# print cosinus
+			angles.append(acos(cosinus-0.01))
+			x1=x2
+			y1=y2
+
+		return var(angles)
+
 	def doping(self, oldState, newState):
-		return (self.dist(oldState)-self.dist(newState))/5
+		return (self.dist(oldState)-self.dist(newState))
