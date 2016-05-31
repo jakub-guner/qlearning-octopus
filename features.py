@@ -21,18 +21,23 @@ class Features:
 		# features.append(self.angleVar(state))	#Im mniej tym lepiej
 
 
-		features.append(12-self.dist(state)) 		#Im wiecej tym lepiej
+		features.append(12-self.distMin(state)) 		#Im wiecej tym lepiej
 		features.append(12-self.distmid(state))		#Im wiecej tym lepiej
 		features.append(self.totalLength(state))	#Im wiecej tym lepiej
 		features.append(1-self.angleDelta(state)) 	#Im wiecej tym lepiej
 		features.append(1-self.angleVar(state))		#Im wiecej tym lepiej
 		return features
 
-	"""Odleglosc koncowki od kropki """
-	def dist(self, state):
-		x = state[38]
-		y = state[39]
-		return self.distanceBetweenPoints(x, y, self.__food[0], self.__food[1])
+	"""Najmniejsza odleglosc dzielaca ramie od kropki """
+	def distMin(self, state):
+		offsetLower=42
+		minDist=float("+inf")
+		for part in range(10):
+			x=state[offsetLower+part*4]
+			y=state[offsetLower+part*4+1]
+			dist=self.distanceBetweenPoints(x, y, self.__food[0], self.__food[1])
+			minDist=min(dist, minDist)
+		return minDist
 
 	"""Odleglosc punktu w polowie ramienia od kropki """
 	def distmid(self, state):
@@ -93,4 +98,4 @@ class Features:
 		return var(angles)
 
 	def doping(self, oldState, newState):
-		return (self.dist(oldState)-self.dist(newState))
+		return (self.distMin(oldState)-self.distMin(newState))
