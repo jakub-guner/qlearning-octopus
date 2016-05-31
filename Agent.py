@@ -39,7 +39,7 @@ class Agent:
 
 	def start(self, state):
 		meta_action = self.__find_best_action(state)
-		action = self.__curlAction(meta_action)
+		action = self.__meta_to_action(meta_action)
 		self.prev_state = state
 		self.prev_action = action
 		self.prev_action_meta = meta_action	
@@ -75,7 +75,7 @@ class Agent:
 		else:
 			meta_action = self.__randomAction()
 
-		action = self.__curlAction(meta_action)
+		action = self.__meta_to_action(meta_action)
 		self.prev_state = state
 		self.prev_action = action
 		self.prev_action_meta = meta_action
@@ -91,7 +91,6 @@ class Agent:
 			self.__save_wages(self.path)	
 		
 		return action
-
 	def __find_best_action(self, state):
 		best_action = []
 		# best = 1000000 
@@ -125,27 +124,25 @@ class Agent:
 
 		return	sum
 	
-	def __curlAction(self, c):
-		action = array('d',[0 for x in range(self.__actionDim)])	
-		if c[0]>-1:				
-			for i in range(self.__actionDim/2):
-				if (i%3 == (c[0])):
-					action[i] = 1
-				else:
-					action[i] = 0
-		if c[1]>-1:					
-			for i in range((self.__actionDim/2),self.__actionDim):
-				if (i%3 == (c[1])):
-					action[i] = 1
-				else:
-					action[i] = 0
-
+	def __meta_to_action(self, c):
+		action = array('d',[0 for x in range(self.__actionDim)])
+		
+		for j in range (len(c)):	
+			if c[j]>-1:				
+				for i in range((j*self.__actionDim/len(c)), (j+1)*(self.__actionDim/len(c))):
+					if (i%3 == (c[j])):
+						action[i] = 1
+					else:
+						action[i] = 0
 		return action
 
 	def normalize(self):
-		suma=0
+		suma = 0
 		for i in range(len(self.__wages)):
-			suma = suma+sum(self.__wages[i])
+			sumtemp=0
+			for j in self.__wages[i]:
+				sumtemp=sumtemp+abs(j)
+			suma = suma+sumtemp
 		for i in range(len(self.__wages)):
 			self.__wages[i][:] = [x / suma for x in self.__wages[i]]
 
@@ -158,8 +155,8 @@ class Agent:
 		indeks_wag_akcji=(self.prev_action_meta[0]+1)*4+(self.prev_action_meta[1]+1)
 		for featurenr in range(len(features)):  
 			difference = (reward + self.discount * minQ) - self.get_Q_value(self.prev_state, self.prev_action_meta)
-			new_value = max(self.__wages[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr], 0)
-			# new_value = self.__wages[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr]
+			#new_value = max(self.__wages[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr], 0)
+			new_value = self.__wages[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr]
 			self.__wages[indeks_wag_akcji][featurenr] = new_value
 
 	def __save_wages(self, path):
