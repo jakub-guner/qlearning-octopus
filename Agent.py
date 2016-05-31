@@ -17,12 +17,7 @@ class Agent:
 		self.__action = array('d',[0 for x in range(actionDim)])
 		#akcje -1 - nic 0 - zgiecie przeciwnie z ruchem, 1 - wydluzenie, 2- zgodnie z ruchem
 		meta_act = [-1,0,1, 2]
-		self.__meta_action=[]
-		for a in meta_act:
-			for b in meta_act:
-				self.__meta_action.append([a,b])
-
-		print(self.__meta_action)
+		self.__meta_action=[-1,0,1, 2]
 		self.__wages = []
 		random.seed()
 		
@@ -49,24 +44,26 @@ class Agent:
 	def step(self, reward, state):
 		dop=self.features.doping(self.prev_state, state)
 		# minQ = float("+inf")
-		minQ = 0
-		for act in self.__meta_action:
-			q = self.get_Q_value(state, act)
-			# minQ = min(minQ, q)
-			minQ = max(minQ, q)
+		for part in range(10):
+			minQ = 0
+			for act in self.__meta_action:
+				q = self.get_Q_value(state, act, part)
+				# minQ = min(minQ, q)
+				minQ = max(minQ, q)
 
-		# if minQ == float("+inf"):
-			# minQ = 0	
-		action = []
-		# reward2 = 0.01
+			# if minQ == float("+inf"):
+				# minQ = 0	
+			action = []
+			# reward2 = 0.01
 
-		if(dop>0 and reward==-0.01):
-			reward/=2
-		if(dop<0 and reward==-0.01):
-			reward*=2
+			if(dop>0 and reward==-0.01):
+				reward/=2
+			if(dop<0 and reward==-0.01):
+				reward*=2
 
-		self.update(minQ, reward, state, action)
-		self.normalize()
+			self.update(minQ, reward, state, action, part)
+			self.normalize()
+			#print "Weight updated:", part
 
 
 		#Exploitation vs exploraion
@@ -78,6 +75,7 @@ class Agent:
 		action = self.__meta_to_action(meta_action)
 		self.prev_state = state
 		self.prev_action = action
+		#print self.prev_action_meta
 		self.prev_action_meta = meta_action
 		self.number=1+self.number
 		
@@ -92,33 +90,39 @@ class Agent:
 		
 		return action
 	def __find_best_action(self, state):
-		best_action = []
+		best_meta_action = []
+		for j in range(10):		
+			best_action = []
 		# best = 1000000 
-		best = float("-inf")#0
-		for i in self.__meta_action:
-			temp = self.get_Q_value(state, i)
-			#print temp, i
-			# if temp<best:
-			if temp>best:
-				best=temp
-				best_action = [i]
-			elif temp==best :
-				best_action.append(i)
-		if (len(best_action) >= 1):
-			best = random.randint(0, len(best_action)-1)
-			return best_action[best]
-		else:
-			return [-1, -1]
+			best = float("-inf")#0
+			for i in self.__meta_action:
+				temp = self.get_Q_value(state, i, j)
+				#print temp, i
+				# if temp<best:
+				if temp>best:
+					best=temp
+					best_action = [i]
+				elif temp==best :
+					best_action.append(i)
+			if (len(best_action) >= 1):
+				best = random.randint(0, len(best_action)-1)
+				best_meta_action.append(best_action[best])
+			else:
+				best_meta_action.append(-1)
+		return best_meta_action
 
 	def __randomAction(self):
- 		return [random.randint(-1, 2),random.randint(-1, 2)]
+		best_meta_action = []
+		for i in range(10):
+			best_meta_action.append(random.randint(-1, 2))
+ 		return best_meta_action
 
-	def get_Q_value(self, state, action):
+	def get_Q_value(self, state, action, part):
 
-		features = self.features.getFeatures(state, action)
-		indeks_wag_akcji=(action[0]+1)*4+(action[1]+1)
+		features = self.features.getFeatures(state, action, part)
+		indeks_wag_akcji=part*4 + action + 1
 		sum=0
-		for i in range(len(self.__wages[(action[0]+1)*4+(action[1]+1)])):
+		for i in range(len(self.__wages[indeks_wag_akcji])):
 			sum=sum+self.__wages[indeks_wag_akcji][i]*features[i]
 
 
@@ -150,11 +154,11 @@ class Agent:
 	"""reward - nagroda za dojscie do biezacego stanu"""
 	"""state - biezacy stan """
 	"""action - zawsze puste """
-	def update(self, minQ, reward, state, action):
-		features = self.features.getFeatures(state, action)
-		indeks_wag_akcji=(self.prev_action_meta[0]+1)*4+(self.prev_action_meta[1]+1)
+	def update(self, minQ, reward, state, action, part):
+		features = self.features.getFeatures(state, action, part)
+		indeks_wag_akcji=part*4 + (self.prev_action_meta[part]+1)
 		for featurenr in range(len(features)):  
-			difference = (reward + self.discount * minQ) - self.get_Q_value(self.prev_state, self.prev_action_meta)
+			difference = (reward + self.discount * minQ) - self.get_Q_value(self.prev_state, self.prev_action_meta[part], part)
 			#new_value = max(self.__wages[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr], 0)
 			new_value = self.__wages[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr]
 			self.__wages[indeks_wag_akcji][featurenr] = new_value

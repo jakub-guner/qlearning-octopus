@@ -12,8 +12,9 @@ class Features:
 		d=d**(0.5)
 		return d
 
-	def getFeatures(self, state, action):
+	def getFeatures(self, state, action, part):
 		features = []
+		#Todo (part od 0 do 9 - 0 to kawalek najblizej przyczepu) - przerobic features by chociaz czesc z nich wyliczana byla dla danego parta
 		# features.append(self.dist(state)) 		#Im mniej tym lepiej
 		# features.append(self.distmid(state))	#Im mniej tym lepiej
 		# features.append(self.totalLength(state))#Im wiecej tym lepiej
