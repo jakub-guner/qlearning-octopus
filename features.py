@@ -15,14 +15,9 @@ class Features:
 	def getFeatures(self, state, action, part):
 		features = []
 		#Todo (part od 0 do 9 - 0 to kawalek najblizej przyczepu) - przerobic features by chociaz czesc z nich wyliczana byla dla danego parta
-		# features.append(self.dist(state)) 		#Im mniej tym lepiej
-		# features.append(self.distmid(state))	#Im mniej tym lepiej
-		# features.append(self.totalLength(state))#Im wiecej tym lepiej
-		# features.append(self.angleDelta(state)) #Im mniej tym lepiej
-		# features.append(self.angleVar(state))	#Im mniej tym lepiej
-
 
 		features.append(12-self.distMin(state)) 		#Im wiecej tym lepiej
+		features.append(12-self.distEnd(state)) 		#Im wiecej tym lepiej
 		features.append(12-self.distmid(state))		#Im wiecej tym lepiej
 		features.append(self.totalLength(state))	#Im wiecej tym lepiej
 		features.append(1-self.angleDelta(state)) 	#Im wiecej tym lepiej
@@ -39,6 +34,12 @@ class Features:
 			dist=self.distanceBetweenPoints(x, y, self.__food[0], self.__food[1])
 			minDist=min(dist, minDist)
 		return minDist
+		
+
+	def distEnd(self, state):
+		x = state[78]
+		y = state[79]
+		return self.distanceBetweenPoints(x, y, self.__food[0], self.__food[1])
 
 	"""Odleglosc punktu w polowie ramienia od kropki """
 	def distmid(self, state):
@@ -88,10 +89,7 @@ class Features:
 			dotProduct=(x2-x1)*(x3-x2)+(y2-y1)*(y3-y2)
 			length1=self.distanceBetweenPoints(x1, y1, x2, y2)
 			length2=self.distanceBetweenPoints(x2, y2, x3, y3)
-			# print dotProduct
-			# print length1*length2
 			cosinus=dotProduct/(length1*length2)
-			# print cosinus
 			angles.append(acos(cosinus-0.01))
 			x1=x2
 			y1=y2
