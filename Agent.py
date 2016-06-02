@@ -150,7 +150,7 @@ class Agent:
 		# print row
 		# print self.__weights[indeks_wag_akcji]
 		# print indeks_wag_akcji
-		bias=0.01*sum(row)
+		bias=sum(row)
 		# print bias
 		# bias=0
 		# print maxQ
