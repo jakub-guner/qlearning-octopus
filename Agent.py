@@ -24,15 +24,15 @@ class Agent:
 					for d in meta_act:
 						self.__meta_action.append([a,b,c,d])
 
-		print(self.__meta_action)
-		self.__wages = []
+		#print(self.__meta_action)
+		self.__weights = []
 		random.seed()
 		
 		self.__load_wages(self.path)	
 
-		self.alpha = float(0.1)
+		self.alpha = float(0.0005)
 		self.epsilon = float(0.05)
-		self.discount = float(0.8)
+		self.discount = float(1.005)
 		self.number = 0
 
 		self.prev_state = []
@@ -68,7 +68,7 @@ class Agent:
 			reward*=2
 
 		self.update(minQ, reward, state, self.prev_action_meta)
-		self.normalize()
+		#self.normalize()
 
 
 		#Exploitation vs exploraion
@@ -121,8 +121,8 @@ class Agent:
 		features = self.features.getFeatures(state, action)
 		indeks_wag_akcji=(action[0]+1)*64+(action[1]+1)*16+(action[2]+1)*4+(action[3]+1)
 		sum=0
-		for i in range(len(self.__wages[indeks_wag_akcji])):
-			sum=sum+self.__wages[indeks_wag_akcji][i]*features[i]
+		for i in range(len(self.__weights[indeks_wag_akcji])):
+			sum=sum+self.__weights[indeks_wag_akcji][i]*features[i]
 
 
 		return	sum
@@ -142,13 +142,13 @@ class Agent:
 	def normalize(self):
 		suma=0
 		
-		for i in range(len(self.__wages)):
+		for i in range(len(self.__weights)):
 			sumtemp=0
-			for j in self.__wages[i]:
+			for j in self.__weights[i]:
 				sumtemp=sumtemp+abs(j)
 			suma = suma+sumtemp
-		for i in range(len(self.__wages)):
-			self.__wages[i][:] = [x / suma for x in self.__wages[i]]
+		for i in range(len(self.__weights)):
+			self.__weights[i][:] = [x / suma for x in self.__weights[i]]
 
 	"""minQ - best w biezacym stanie """
 	"""reward - nagroda za dojscie do biezacego stanu"""
@@ -157,17 +157,23 @@ class Agent:
 	def update(self, minQ, reward, state, action):
 		features = self.features.getFeatures(state, action)
 		indeks_wag_akcji=(action[0]+1)*64+(action[1]+1)*16+(action[2]+1)*4+(action[3]+1)
-		print indeks_wag_akcji
+		row=[abs(w) for w in self.__weights[indeks_wag_akcji]]
+		bias=sum(row)
 		for featurenr in range(len(features)):  
-			print self.__wages[indeks_wag_akcji], featurenr
+			#print self.__weights[indeks_wag_akcji], featurenr
 			difference = (reward + self.discount * minQ) - self.get_Q_value(self.prev_state, self.prev_action_meta)
-			#new_value = max(self.__wages[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr], 0)
-			new_value = self.__wages[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr]
-			self.__wages[indeks_wag_akcji][featurenr] = new_value
+			if(difference<0):
+				difference-=bias
+			else:
+				difference+=bias
+
+			#new_value = max(self.__weights[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr], 0)
+			new_value = self.__weights[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr]
+			self.__weights[indeks_wag_akcji][featurenr] = new_value
 
 	def __save_wages(self, path):
 		with open(path, 'w') as outputfile:
-			for x in self.__wages:
+			for x in self.__weights:
 				for a in x:
 					outputfile.write(str(a))
 					outputfile.write(' ')
@@ -178,9 +184,9 @@ class Agent:
 		z=0
 		with open(path) as inputfile:
 			for line in inputfile:
-				self.__wages.append([])
+				self.__weights.append([])
 				for x in line.split():
-					self.__wages[z].append(float(x)) 
+					self.__weights[z].append(float(x)) 
 					
 				z=z+1
 		print 'Wages loaded with success'

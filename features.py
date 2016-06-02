@@ -14,24 +14,29 @@ class Features:
 
 	def getFeatures(self, state, action):
 		features = []
-		# features.append(self.dist(state)) 		#Im mniej tym lepiej
-		# features.append(self.distmid(state))	#Im mniej tym lepiej
-		# features.append(self.totalLength(state))#Im wiecej tym lepiej
-		# features.append(self.angleDelta(state)) #Im mniej tym lepiej
-		# features.append(self.angleVar(state))	#Im mniej tym lepiej
-
-
-		features.append(12-self.dist(state)) 		#Im wiecej tym lepiej
+		features.append(12-self.distMin(state)) 		#Im wiecej tym lepiej
+		features.append(12-self.distEnd(state)) 		#Im wiecej tym lepiej
 		features.append(12-self.distmid(state))		#Im wiecej tym lepiej
 		features.append(self.totalLength(state))	#Im wiecej tym lepiej
 		features.append(1-self.angleDelta(state)) 	#Im wiecej tym lepiej
 		features.append(1-self.angleVar(state))		#Im wiecej tym lepiej
 		return features
 
-	"""Odleglosc koncowki od kropki """
-	def dist(self, state):
-		x = state[38]
-		y = state[39]
+	"""Najmniejsza odleglosc dzielaca ramie od kropki """
+	def distMin(self, state):
+		offsetLower=42
+		minDist=float("+inf")
+		for part in range(10):
+			x=state[offsetLower+part*4]
+			y=state[offsetLower+part*4+1]
+			dist=self.distanceBetweenPoints(x, y, self.__food[0], self.__food[1])
+			minDist=min(dist, minDist)
+		return minDist
+		
+
+	def distEnd(self, state):
+		x = state[78]
+		y = state[79]
 		return self.distanceBetweenPoints(x, y, self.__food[0], self.__food[1])
 
 	"""Odleglosc punktu w polowie ramienia od kropki """
@@ -82,10 +87,7 @@ class Features:
 			dotProduct=(x2-x1)*(x3-x2)+(y2-y1)*(y3-y2)
 			length1=self.distanceBetweenPoints(x1, y1, x2, y2)
 			length2=self.distanceBetweenPoints(x2, y2, x3, y3)
-			# print dotProduct
-			# print length1*length2
 			cosinus=dotProduct/(length1*length2)
-			# print cosinus
 			angles.append(acos(cosinus-0.01))
 			x1=x2
 			y1=y2
@@ -93,4 +95,4 @@ class Features:
 		return var(angles)
 
 	def doping(self, oldState, newState):
-		return (self.dist(oldState)-self.dist(newState))
+		return (self.distMin(oldState)-self.distMin(newState))
