@@ -6,4 +6,11 @@ W przypadku dodawania nowej funkcji aproksymującej:
 
 Plik features.py powinien się znajdować w folderze z agentem
   
-  
+Do zmiany:
+- wywalić normalizacje
+- wywalic bias
+- alpha = 0.005
+- discount = 1 
+- jedna decyzja co ileś kroków, (5-10) + sumowanie rewardów w tym czasie
+- czas w featurach
+- zmienic w stepie max z get-q-value (minQ = -inf) 
