@@ -28,10 +28,13 @@ class Agent:
 		
 		self.__load_wages(self.path)	
 
-		self.alpha = float(0.1)
-		self.epsilon = float(0.05)
-		self.discount = float(0.8)
+		self.alpha = float(0.005)
+		self.epsilon = float(0.05) #not relevant
+		self.discount = float(1)
 		self.number = 0
+		self.reward_cum = 0
+		self.decision_every = 5
+	
 
 		self.prev_state = []
 		self.prev_action = []
@@ -48,32 +51,33 @@ class Agent:
 	
 	def step(self, reward, state):
 		dop=self.features.doping(self.prev_state, state)
-		# minQ = float("+inf")
-		minQ = 0
-		for act in self.__meta_action:
-			q = self.get_Q_value(state, act)
-			# minQ = min(minQ, q)
-			minQ = max(minQ, q)
-
-		# if minQ == float("+inf"):
-			# minQ = 0	
-		action = []
-		# reward2 = 0.01
-
 		if(dop>0 and reward==-0.01):
 			reward/=2
 		if(dop<0 and reward==-0.01):
 			reward*=2
 
-		self.update(minQ, reward, state, action)
-		self.normalize()
+		self.reward_cum+=reward
 
+		if (self.number%self.decision_every==0):
+			maxQ = float("-inf")
+			for act in self.__meta_action:
+				q = self.get_Q_value(state, act)
+				maxQ = max(maxQ, q)
+			if maxQ == float("-inf"):
+				maxQ = 0	
+			action = []
+		
 
-		#Exploitation vs exploraion
-		if(random.randint(0, 10)<9):
-			meta_action = self.__find_best_action(state)
+			self.update(maxQ, self.reward_cum, state, action)
+			self.reward_cum = 0
+
+			#Exploitation vs exploraion
+			if(random.randint(0, 10)<9):
+				meta_action = self.__find_best_action(state)
+			else:
+				meta_action = self.__randomAction()
 		else:
-			meta_action = self.__randomAction()
+			meta_action = self.prev_action_meta
 
 		action = self.__meta_to_action(meta_action)
 		self.prev_state = state
@@ -136,26 +140,15 @@ class Agent:
 						action[i] = 0
 		return action
 
-	def normalize(self):
-		suma = 0
-		for i in range(len(self.__wages)):
-			sumtemp=0
-			for j in self.__wages[i]:
-				sumtemp=sumtemp+abs(j)
-			suma = suma+sumtemp
-		for i in range(len(self.__wages)):
-			self.__wages[i][:] = [x / suma for x in self.__wages[i]]
-
-	"""minQ - best w biezacym stanie """
+	"""maxQ - best w biezacym stanie """
 	"""reward - nagroda za dojscie do biezacego stanu"""
 	"""state - biezacy stan """
 	"""action - zawsze puste """
-	def update(self, minQ, reward, state, action):
+	def update(self, maxQ, reward, state, action):
 		features = self.features.getFeatures(state, action)
 		indeks_wag_akcji=(self.prev_action_meta[0]+1)*4+(self.prev_action_meta[1]+1)
 		for featurenr in range(len(features)):  
-			difference = (reward + self.discount * minQ) - self.get_Q_value(self.prev_state, self.prev_action_meta)
-			#new_value = max(self.__wages[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr], 0)
+			difference = (reward + self.discount * maxQ) - self.get_Q_value(self.prev_state, self.prev_action_meta)
 			new_value = self.__wages[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr]
 			self.__wages[indeks_wag_akcji][featurenr] = new_value
 
