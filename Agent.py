@@ -2,6 +2,9 @@ import random
 import features
 from array import array
 
+"""1 decyzja co X krokow => zsumowane nagrody """
+"""feature - czas ??? """
+
 class Agent:
 	#name should contain only letters, digits, and underscores (not enforced by environment)
 	__name = 'JT_JG'
@@ -23,9 +26,9 @@ class Agent:
 		
 		self.__load_weights(self.path)	
 
-		self.alpha = float(0.0005)
+		self.alpha = float(0.005)
 		self.epsilon = float(0.05)
-		self.discount = float(1.005)
+		self.discount = float(1.00)
 		self.number = 0
 
 		self.prev_state = []
@@ -147,20 +150,14 @@ class Agent:
 		indeks_wag_akcji=part*4 + (self.prev_action_meta[part]+1)
 		# Regularyzacja
 		row=[abs(w) for w in self.__weights[indeks_wag_akcji]]
-		# print row
-		# print self.__weights[indeks_wag_akcji]
-		# print indeks_wag_akcji
 		bias=sum(row)
-		# print bias
-		# bias=0
-		# print maxQ
-		# print features
+		print maxQ
 		for featurenr in range(len(features)):  
 			difference = (reward + self.discount * maxQ) - self.get_Q_value(self.prev_state, self.prev_action_meta[part], part)
-			if(difference<0):
-				difference-=bias
-			else:
-				difference+=bias
+			# if(difference<0):
+			# 	difference-=bias
+			# else:
+			# 	difference+=bias
 			#new_value = max(self.__weights[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr], 0)
 			new_value = self.__weights[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr]
 			self.__weights[indeks_wag_akcji][featurenr] = new_value
