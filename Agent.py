@@ -120,6 +120,7 @@ class Agent:
 	def get_Q_value(self, state, action):
 
 		features = self.features.getFeatures(state, action)
+		# print action
 		indeks_wag_akcji=(action[0]+1)*4+(action[1]+1)
 		sum=0
 		for i in range(len(self.__wages[(action[0]+1)*4+(action[1]+1)])):
@@ -150,7 +151,7 @@ class Agent:
 		for featurenr in range(len(features)):  
 			difference = (reward + self.discount * maxQ) - self.get_Q_value(self.prev_state, self.prev_action_meta)
 			new_value = self.__wages[indeks_wag_akcji][featurenr] + self.alpha * difference * features[featurenr]
-			self.__wages[indeks_wag_akcji][featurenr] = new_value
+			self.__wages[indeks_wag_akcji][featurenr] = new_value/10
 
 	def __save_wages(self, path):
 		with open(path, 'w') as outputfile:
